@@ -29,6 +29,8 @@ platforms:
 testplatforms:
   - name: Standalone
     args: --suite=playmode --platform=Standalone
+  - name: Standalone XR
+    args: --suite=playmode --platform=Standalone --extra-editor-arg="-xr-tests"
 projects:
   - name: HDRP_Standalone
     folder: HDRP_RuntimeTests
@@ -66,8 +68,8 @@ mac_apis:
   commands:
     - git clone git@github.cds.internal.unity3d.com:unity/utr.git  TestProjects/{{ project.folder }}/utr
     - pip install unity-downloader-cli --extra-index-url https://artifactory.internal.unity3d.com/api/pypi/common-python/simple --upgrade
-    
-    - cd TestProjects/{{ project.folder }} && unity-downloader-cli --source-file ../../unity_revision.txt {% for component in platform.components %}-c {{ component }} {% endfor %}--wait --published-only 
+
+    - cd TestProjects/{{ project.folder }} && unity-downloader-cli --source-file ../../unity_revision.txt {% for component in platform.components %}-c {{ component }} {% endfor %}--wait --published-only
 
     - cd TestProjects/{{ project.folder }} && utr\utr {{ testplatform.args }}Windows64 --artifacts_path=test-results --timeout=1200 --player-load-path=../../players --player-connection-ip=auto
   artifacts:
@@ -79,7 +81,7 @@ mac_apis:
       rerun: {{ editor.rerun_strategy }}
     - path: .yamato/upm-ci-hdrp_standalone.yml#Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}
       rerun: {{ editor.rerun_strategy }}
-  
+
 Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
   name : Build {{ project.name }} on Win_{{ win_api.name }}_Player on version {{ editor.version }}
   agent:
@@ -94,7 +96,7 @@ Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
   commands:
     - git clone git@github.cds.internal.unity3d.com:unity/utr.git  TestProjects/{{ project.folder }}/utr
     - pip install unity-downloader-cli --extra-index-url https://artifactory.internal.unity3d.com/api/pypi/common-python/simple --upgrade
-    
+
     - cd TestProjects/{{ project.folder }} && unity-downloader-cli --source-file ../../unity_revision.txt {% for component in platform.components %}-c {{ component }} {% endfor %}--wait --published-only
 
     - cd TestProjects/{{ project.folder }} && utr\utr {{ testplatform.args }}Windows64 --extra-editor-arg="-executemethod" --extra-editor-arg="CustomBuild.BuildWindows{{ win_api.name }}Linear" --testproject=. --editor-location=.Editor --artifacts_path=test-results --timeout=1200 --player-save-path=../../players --build-only
@@ -108,7 +110,7 @@ Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
     players:
       paths:
         - "players/**"
-  
+
 {% else %}
 
 {{ project.name }}_Win_{{ win_api.name }}_{{ testplatform.name }}_{{ editor.version }}:
@@ -118,8 +120,8 @@ Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
     type: Unity::VM
     {% else %}
     type: Unity::VM::GPU
-    {% endif %} 
-    image: {{ platform.image }}      
+    {% endif %}
+    image: {{ platform.image }}
     flavor: {{ platform.flavor }}
   variables:
     UPM_REGISTRY: https://artifactory-slo.bf.unity3d.com/artifactory/api/npm/upm-candidates
@@ -129,8 +131,8 @@ Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
   commands:
     - git clone git@github.cds.internal.unity3d.com:unity/utr.git  TestProjects/{{ project.folder }}/utr
     - pip install unity-downloader-cli --extra-index-url https://artifactory.internal.unity3d.com/api/pypi/common-python/simple --upgrade
-    
-    - cd TestProjects/{{ project.folder }} && unity-downloader-cli --source-file ../../unity_revision.txt {% for component in platform.components %}-c {{ component }} {% endfor %}--wait --published-only   
+
+    - cd TestProjects/{{ project.folder }} && unity-downloader-cli --source-file ../../unity_revision.txt {% for component in platform.components %}-c {{ component }} {% endfor %}--wait --published-only
 
     - cd TestProjects/{{ project.folder }} && utr\utr {{ testplatform.args }} --extra-editor-arg="{{ win_api.cmd }}" --testproject=. --editor-location=.Editor --artifacts_path=test-results
   dependencies:
@@ -144,7 +146,7 @@ Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
 {% endif %}
 
 
-{% endfor %}    
+{% endfor %}
 {% endfor %}
 
 {% elsif platform.name == "OSX_Metal" %}
@@ -157,7 +159,7 @@ Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
   name : {{ project.name }} on OSX_Metal_{{ testplatform.name }} on version {{ editor.version }}
   agent:
     type: {{ platform.type }}
-    image: {{ platform.image }}      
+    image: {{ platform.image }}
     flavor: {{ platform.flavor }}
   variables:
     UPM_REGISTRY: https://artifactory-slo.bf.unity3d.com/artifactory/api/npm/upm-candidates
@@ -166,14 +168,14 @@ Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
     {% endif %}
   commands:
     - git clone git@github.cds.internal.unity3d.com:unity/utr.git TestProjects/{{ project.folder }}/utr
-    
+
     - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP "bash -lc 'pip3 install --user unity-downloader-cli --extra-index-url https://artifactory.internal.unity3d.com/api/pypi/common-python/simple'"
     - scp -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" -r $YAMATO_SOURCE_DIR bokken@$BOKKEN_DEVICE_IP:~/Graphics
     - scp -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" ~/.ssh/id_rsa_macmini bokken@$BOKKEN_DEVICE_IP:~/.ssh/id_rsa_macmini
 
     - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP '/Users/bokken/Library/Python/3.7/bin/unity-downloader-cli --source-file ~/Graphics/unity_revision.txt {% for component in platform.components %}-c {{ component }} {% endfor %}--wait --published-only'
 
-    
+
     {% if testplatform.name == "Standalone" %}
     - |
       ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP 'cd ~/Graphics/TestProjects/{{ project.folder }} && ~/Graphics/TestProjects/{{ project.folder }}/utr/utr {{ testplatform.args }}OSX  --testproject=/Users/bokken/Graphics/TestProjects/{{ project.folder }} --editor-location=/Users/bokken/.Editor --artifacts_path=/Users/bokken/Graphics/TestProjects/{{ project.folder }}/test-results --timeout=1200'
@@ -195,7 +197,7 @@ Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
 {% endif %}
 {% endfor %}
 
- 
+
 {% endif %}
 {% endfor %}
 
@@ -216,19 +218,19 @@ All_{{ project.name }}_{{ editor.version }}:
   {% for platform in platforms %}
   {% for testplatform in testplatforms %}
   {% if platform.name == "OSX_OpenGLCore" %}
-  
+
   {% if testplatform.name == "editmode" %}
     - path: .yamato/upm-ci-{{ project.name | downcase }}.yml#{{ project.name }}_{{ platform.name }}_{{ testplatform.name }}_{{ editor.version }}
       rerun: {{ editor.rerun_strategy }}
   {% endif %}
-  
+
   {% elsif platform.name == "OSX_Metal"  and testplatform.name == "editmode" %}
-  
+
   {% elsif platform.name == "OSX_Metal" %}
   #skip
   {% elsif platform.name == "Linux" %}
   #skip
-  
+
   {% elsif platform.name == "Win" %}
   {% for win_api in win_apis %}
   {% if win_api.name == "Vulkan" %}
@@ -243,8 +245,8 @@ All_{{ project.name }}_{{ editor.version }}:
     - path: .yamato/upm-ci-{{ project.name | downcase }}.yml#{{ project.name }}_{{ platform.name }}_{{ testplatform.name }}_{{ editor.version }}
       rerun: {{ editor.rerun_strategy }}
   {% endif %}
-    
+
   {% endfor %}
   {% endfor %}
-{% endfor %}   
+{% endfor %}
 {% endfor %}
