@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated legacy COLOR output semantic to SV_Target in pixel shader for compatibility with DXC
 - Changed the Voronoi Node algorithm to increase the useful range of the input values and to always use float values internally to avoid clipping.
 - Changed the `Reference Suffix` of Keyword Enum entries so that you cannot edit them, which ensures that material keywords compile properly. 
+- Changed ShaderGraphImporter and ShaderSubgraphImporter so that graphs are imported before Models.
 
 ### Fixed
 - Edges no longer produce errors when you save a Shader Graph.
