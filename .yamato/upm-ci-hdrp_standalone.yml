@@ -154,7 +154,7 @@ Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
 {% for testplatform in testplatforms %}
 {% if testplatform.name == "editmode" %}
 #skip because we don't need a GPU to run editmode tests
-{% if testplatform.name == "StandaloneXR" %}
+{% elsif testplatform.name == "StandaloneXR" %}
 #skip because XR is not supported on macOS
 {% else %}
 {{ project.name }}_OSX_Metal_{{ testplatform.name }}_{{ editor.version }}:
