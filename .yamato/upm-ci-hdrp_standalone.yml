@@ -29,7 +29,7 @@ platforms:
 testplatforms:
   - name: Standalone
     args: --suite=playmode --platform=Standalone
-  - name: Standalone XR
+  - name: StandaloneXR
     args: --suite=playmode --platform=Standalone --extra-editor-arg="-xr-tests"
 projects:
   - name: HDRP_Standalone
@@ -52,7 +52,7 @@ mac_apis:
 {% for testplatform in testplatforms %}
 {% for win_api in win_apis %}
 
-{% if testplatform.name == "Standalone" %}
+{% if testplatform.name == "Standalone" || testplatform.name == "StandaloneXR" %}
 {{ project.name }}_Win_{{ win_api.name }}_{{ testplatform.name }}_{{ editor.version }}:
   name : Test {{ project.name }} on Win_{{ win_api.name }}_{{ testplatform.name }} on version {{ editor.version }}
   agent:
@@ -176,7 +176,7 @@ Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
     - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP '/Users/bokken/Library/Python/3.7/bin/unity-downloader-cli --source-file ~/Graphics/unity_revision.txt {% for component in platform.components %}-c {{ component }} {% endfor %}--wait --published-only'
 
 
-    {% if testplatform.name == "Standalone" %}
+    {% if testplatform.name == "Standalone" || testplatform.name == "StandaloneXR" %}
     - |
       ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP 'cd ~/Graphics/TestProjects/{{ project.folder }} && ~/Graphics/TestProjects/{{ project.folder }}/utr/utr {{ testplatform.args }}OSX  --testproject=/Users/bokken/Graphics/TestProjects/{{ project.folder }} --editor-location=/Users/bokken/.Editor --artifacts_path=/Users/bokken/Graphics/TestProjects/{{ project.folder }}/test-results --timeout=1200'
     {% else %}
