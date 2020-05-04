@@ -52,7 +52,6 @@ mac_apis:
 {% for testplatform in testplatforms %}
 {% for win_api in win_apis %}
 
-{% if testplatform.name == "Standalone" || testplatform.name == "StandaloneXR" %}
 {{ project.name }}_Win_{{ win_api.name }}_{{ testplatform.name }}_{{ editor.version }}:
   name : Test {{ project.name }} on Win_{{ win_api.name }}_{{ testplatform.name }} on version {{ editor.version }}
   agent:
@@ -110,40 +109,6 @@ Build_{{ project.name }}_Win_{{ win_api.name }}_Player_{{ editor.version }}:
     players:
       paths:
         - "players/**"
-
-{% else %}
-
-{{ project.name }}_Win_{{ win_api.name }}_{{ testplatform.name }}_{{ editor.version }}:
-  name : {{ project.name }} on Win_{{ win_api.name }}_{{ testplatform.name }} on version {{ editor.version }}
-  agent:
-    {% if testplatform.name == "editmode" %}
-    type: Unity::VM
-    {% else %}
-    type: Unity::VM::GPU
-    {% endif %}
-    image: {{ platform.image }}
-    flavor: {{ platform.flavor }}
-  variables:
-    UPM_REGISTRY: https://artifactory-slo.bf.unity3d.com/artifactory/api/npm/upm-candidates
-    {% if editor.version == 'CUSTOM-REVISION' %}
-    CUSTOM_REVISION: custom_revision_not_set
-    {% endif %}
-  commands:
-    - git clone git@github.cds.internal.unity3d.com:unity/utr.git  TestProjects/{{ project.folder }}/utr
-    - pip install unity-downloader-cli --extra-index-url https://artifactory.internal.unity3d.com/api/pypi/common-python/simple --upgrade
-
-    - cd TestProjects/{{ project.folder }} && unity-downloader-cli --source-file ../../unity_revision.txt {% for component in platform.components %}-c {{ component }} {% endfor %}--wait --published-only
-
-    - cd TestProjects/{{ project.folder }} && utr\utr {{ testplatform.args }} --extra-editor-arg="{{ win_api.cmd }}" --testproject=. --editor-location=.Editor --artifacts_path=test-results
-  dependencies:
-    - path: .yamato/z_editor.yml#editor:priming:{{ editor.version }}:{{ platform.os }}
-      rerun: {{ editor.rerun_strategy }}
-  artifacts:
-    logs:
-      paths:
-        - "**/test-results/**"
-
-{% endif %}
 
 
 {% endfor %}
