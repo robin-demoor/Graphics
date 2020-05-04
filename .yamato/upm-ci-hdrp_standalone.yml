@@ -30,7 +30,7 @@ testplatforms:
   - name: Standalone
     args: --suite=playmode --platform=Standalone
   - name: StandaloneXR
-    args: --suite=playmode --platform=Standalone --extra-editor-arg="-xr-tests"
+    args: --suite=playmode --extra-editor-arg="-xr-tests" --platform=Standalone
 projects:
   - name: HDRP_Standalone
     folder: HDRP_RuntimeTests
