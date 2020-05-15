@@ -190,6 +190,7 @@ namespace UnityEngine.Rendering.HighDefinition
         ShaderVariablesGlobal m_ShaderVariablesGlobalCB = new ShaderVariablesGlobal();
         ShaderVariablesXR m_ShaderVariablesXRCB = new ShaderVariablesXR();
         ShaderVariablesDebugDisplay m_ShaderVariablesDebugDisplayCB = new ShaderVariablesDebugDisplay();
+        ShaderVariablesPhysicallyBasedSky m_ShaderVariablesPhysicallyBasedSky = new ShaderVariablesPhysicallyBasedSky();
 
         // The current MSAA count
         MSAASamples m_MSAASamples;
@@ -1135,6 +1136,9 @@ namespace UnityEngine.Rendering.HighDefinition
 
             hdCamera.UpdateShaderVariablesXRCB(ref m_ShaderVariablesXRCB);
             ConstantBuffer.PushGlobal(cmd, m_ShaderVariablesXRCB, HDShaderIDs._ShaderVariablesXR);
+
+            // Bind dummy cb so that Vulkan stops complaining about missing cb
+            ConstantBuffer.PushGlobal(cmd, m_ShaderVariablesPhysicallyBasedSky, HDShaderIDs._ShaderVariablesPhysicallyBasedSky);
 
             // This one is not in a constant buffer because it's only used as a parameter for some shader's render states. It's not actually used inside shader code.
             cmd.SetGlobalInt(HDShaderIDs._ColorMaskTransparentVel, (int)ColorWriteMask.All);
