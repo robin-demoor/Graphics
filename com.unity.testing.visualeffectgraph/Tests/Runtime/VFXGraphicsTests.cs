@@ -67,6 +67,14 @@ namespace UnityEngine.VFX.Test
             UnityEngine.VFX.VFXManager.fixedTimeStep = period;
             UnityEngine.VFX.VFXManager.maxDeltaTime = period;
 
+            if (XRGraphicsAutomatedTests.enabled)
+            {
+                if (vfxTestSettingsInScene == null || vfxTestSettingsInScene.xrCompatible)
+                    XRGraphicsAutomatedTests.running = true;
+                else
+                    Assert.Ignore("Test scene is not compatible with XR and will be skipped.");
+            }
+
             //Waiting for the capture frame rate to be effective
             const int maxFrameWaiting = 8;
             int maxFrame = maxFrameWaiting;
@@ -96,7 +104,7 @@ namespace UnityEngine.VFX.Test
                     yield return null;
                 Assert.Greater(maxFrame, 0);
 
-                foreach (var component in vfxComponents) 
+                foreach (var component in vfxComponents)
                     component.Reinit();
 
 #if UNITY_EDITOR
@@ -163,6 +171,8 @@ namespace UnityEngine.VFX.Test
         [TearDown]
         public void TearDown()
         {
+            XRGraphicsAutomatedTests.running = false;
+
 #if UNITY_EDITOR
             UnityEditor.TestTools.Graphics.ResultsUtility.ExtractImagesFromTestProperties(TestContext.CurrentContext.Test);
 #endif

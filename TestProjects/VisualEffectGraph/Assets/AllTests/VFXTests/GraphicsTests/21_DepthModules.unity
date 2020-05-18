@@ -1138,6 +1138,7 @@ MonoBehaviour:
     UseHDR: 0
   captureFrameRate: 20
   simulateTime: 5.95
+  xrCompatible: 0
 --- !u!4 &1932225226
 Transform:
   m_ObjectHideFlags: 0
