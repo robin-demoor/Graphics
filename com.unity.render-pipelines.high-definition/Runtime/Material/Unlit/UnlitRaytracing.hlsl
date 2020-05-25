@@ -16,4 +16,18 @@ void FitToStandardLit( SurfaceData surfaceData
     // Be cause this will not be lit, we need to apply atmospheric scattering right away
     ApplyFogAttenuation(WorldRayOrigin(), WorldRayDirection(), RayTCurrent(), outStandardlit.emissiveAndBaked, true);
 }
+
+void FitToMinimalLit( SurfaceData surfaceData
+                        , BuiltinData builtinData
+                        , float3 normalWS
+                        , out StandardBSDFData outStandardlit)
+{    
+    ZERO_INITIALIZE(StandardBSDFData, outStandardlit);
+    
+    outStandardlit.emissiveAndBaked = surfaceData.color * GetInverseCurrentExposureMultiplier() + builtinData.emissiveColor;
+    outStandardlit.isUnlit = 1;
+
+    // Be cause this will not be lit, we need to apply atmospheric scattering right away
+    ApplyFogAttenuation(WorldRayOrigin(), WorldRayDirection(), RayTCurrent(), outStandardlit.emissiveAndBaked, true);
+}
 #endif

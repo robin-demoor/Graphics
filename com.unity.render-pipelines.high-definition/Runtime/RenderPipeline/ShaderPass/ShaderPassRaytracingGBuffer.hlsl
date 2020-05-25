@@ -9,15 +9,9 @@ void ClosestHitGBuffer(inout RayIntersectionGBuffer rayIntersectionGbuffer : SV_
     GetCurrentIntersectionVertex(attributeData, currentVertex);
 
     // Build the Frag inputs from the intersection vertice
+    const float3 incidentDir = WorldRayDirection();
     FragInputs fragInput;
-    BuildFragInputsFromIntersection(currentVertex, rayIntersectionGbuffer.incidentDirection, fragInput);
-
-    // Compute the view vector
-    float3 viewWS = -rayIntersectionGbuffer.incidentDirection;
-
-    // Make sure to add the additional travel distance
-    float travelDistance = length(GetAbsolutePositionWS(fragInput.positionRWS) - rayIntersectionGbuffer.origin);
-    rayIntersectionGbuffer.cone.width += travelDistance * rayIntersectionGbuffer.cone.spreadAngle;
+    BuildFragInputsFromIntersection(currentVertex, incidentDir, fragInput);
 
     PositionInputs posInput;
     posInput.positionWS = fragInput.positionRWS;
@@ -27,23 +21,26 @@ void ClosestHitGBuffer(inout RayIntersectionGBuffer rayIntersectionGbuffer : SV_
     SurfaceData surfaceData;
     BuiltinData builtinData;
     bool isVisible;
-    GetSurfaceAndBuiltinData(fragInput, viewWS, posInput, surfaceData, builtinData, currentVertex, rayIntersectionGbuffer.cone, isVisible);
-
-    // Sometimes, we only  want to use the diffuse when we compute the indirect diffuse
-    if (_RayTracingDiffuseLightingOnly)
-    {
-        builtinData.bakeDiffuseLighting = float3(0.0, 0.0, 0.0);
-        builtinData.backBakeDiffuseLighting = float3(0.0, 0.0, 0.0);
-    }
-
+    RayCone cone;
+    cone.width = 0.0;
+    cone.spreadAngle = 0.0;
+    GetSurfaceAndBuiltinData(fragInput, -incidentDir, posInput, surfaceData, builtinData, currentVertex, cone, isVisible);
+    
+#ifdef MINIMAL_GBUFFER
+    // First we pack the data into the standard bsdf data
+    StandardBSDFData standardLitData;
+    ZERO_INITIALIZE(StandardBSDFData, standardLitData);
+    FitToMinimalLit(surfaceData, builtinData, fragInput.tangentToWorld[2], standardLitData);
+#else
     // First we pack the data into the standard bsdf data
     StandardBSDFData standardLitData;
     ZERO_INITIALIZE(StandardBSDFData, standardLitData);
     FitToStandardLit(surfaceData, builtinData, posInput.positionSS, standardLitData);
-    
+#endif
+
     // Then export it to the gbuffer
-    ENCODE_TO_STANDARD_GBUFFER(standardLitData, rayIntersectionGbuffer.gBufferData.gbuffer);
-    rayIntersectionGbuffer.t = standardLitData.isUnlit != 0 ? -1 : travelDistance;
+    EncodeIntoStandardGBuffer(standardLitData, rayIntersectionGbuffer.gbuffer0, rayIntersectionGbuffer.gbuffer1, rayIntersectionGbuffer.gbuffer2, rayIntersectionGbuffer.gbuffer3);
+    rayIntersectionGbuffer.t = standardLitData.isUnlit != 0 ? -1 : RayTCurrent();
 }
 
 // Generic function that handles the reflection code
@@ -58,11 +55,9 @@ void AnyHitGBuffer(inout RayIntersectionGBuffer rayIntersectionGbuffer : SV_RayP
     GetCurrentIntersectionVertex(attributeData, currentVertex);
 
     // Build the Frag inputs from the intersection vertice
+    const float3 incidentDir = WorldRayDirection();
     FragInputs fragInput;
-    BuildFragInputsFromIntersection(currentVertex, rayIntersectionGbuffer.incidentDirection, fragInput);
-
-    // Compute the view vector
-    float3 viewWS = -rayIntersectionGbuffer.incidentDirection;
+    BuildFragInputsFromIntersection(currentVertex, incidentDir, fragInput);
 
     PositionInputs posInput;
     posInput.positionWS = fragInput.positionRWS;
@@ -72,7 +67,10 @@ void AnyHitGBuffer(inout RayIntersectionGBuffer rayIntersectionGbuffer : SV_RayP
     SurfaceData surfaceData;
     BuiltinData builtinData;
     bool isVisible;
-    GetSurfaceAndBuiltinData(fragInput, viewWS, posInput, surfaceData, builtinData, currentVertex, rayIntersectionGbuffer.cone, isVisible);
+    RayCone cone;
+    cone.width = 0.0;
+    cone.spreadAngle = 0.0;
+    GetSurfaceAndBuiltinData(fragInput, -incidentDir, posInput, surfaceData, builtinData, currentVertex, cone, isVisible);
 
     // If this fella should be culled, then we cull it
     if(!isVisible)

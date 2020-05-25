@@ -39,12 +39,21 @@ void FitToStandardLit( SurfaceData surfaceData
     outStandardlit.fresnel0 = surfaceData.specularColor;
     outStandardlit.coatMask = 0.0;
     outStandardlit.emissiveAndBaked = builtinData.bakeDiffuseLighting * surfaceData.ambientOcclusion + builtinData.emissiveColor;
-#ifdef LIGHT_LAYERS
-    outStandardlit.renderingLayers = builtinData.renderingLayers;
-#endif
-#ifdef SHADOWS_SHADOWMASK
-    outStandardlit.shadowMasks = BUILTIN_DATA_SHADOW_MASK;
-#endif
+    outStandardlit.isUnlit = 0;
+}
+
+void FitToMinimalLit( SurfaceData surfaceData
+                        , BuiltinData builtinData
+                        , float3 normalWS
+                        , out StandardBSDFData outStandardlit)
+{    
+    outStandardlit.baseColor = surfaceData.baseColor;
+    outStandardlit.specularOcclusion = 1.0;
+    outStandardlit.normalWS = normalWS;
+    outStandardlit.perceptualRoughness = 0.0;
+    outStandardlit.fresnel0 = 0.0;
+    outStandardlit.coatMask = 0.0;
+    outStandardlit.emissiveAndBaked = builtinData.emissiveColor;
     outStandardlit.isUnlit = 0;
 }
 #endif

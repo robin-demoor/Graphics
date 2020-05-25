@@ -130,6 +130,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added CustomPassUtils API to simplify Blur, Copy and DrawRenderers custom passes.
 - Added Histogram guided automatic exposure.
 - Added few exposure debug modes.
+- Added a minimal lit used for RTGI in peformance mode.
+- Dispatch binned rays in 1D instead of 2D.
 
 ### Fixed
 - Fix when rescale probe all direction below zero (1219246)
@@ -622,6 +624,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed Wizard check on default volume profile to also check it is not the default one in package.
 - Fix erroneous central depth sampling in TAA.
 - Fixed light layers not correctly disabled when the lightlayers is set to Nothing and Lightlayers isn't enabled in HDRP Asset
+- Fix an issue with the half resolution Mode (performance)
+- Fix an issue with the color intensity of emissive for performance rtgi
 
 ### Changed
 - Improve MIP selection for decals on Transparents
@@ -754,6 +758,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Slightly changed the TAA anti-flicker mechanism so that it is more aggressive on almost static images (only on High preset for now).
 - Changed default exposure compensation to 0.
 - Refactored shadow caching system.
+- Only read the geometric attributes that are required using the share pass info and shader graph defines.
 
 ## [7.1.1] - 2019-09-05
 

@@ -8,7 +8,7 @@ float roughnessToSpreadAngle(float roughness)
     return roughness * PI/8;
 }
 
-#define USE_RAY_CONE_LOD
+// #define USE_RAY_CONE_LOD
 
 float computeBaseTextureLOD(float3 viewWS,
                             float3 normalWS,
