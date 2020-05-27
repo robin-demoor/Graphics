@@ -961,7 +961,7 @@ namespace UnityEngine.Rendering.HighDefinition
             // Dispose of Render Pipeline can be call either by OnValidate() or by OnDisable().
             // Inside an OnValidate() call we can't call a DestroyImmediate().
             // Here we are releasing our singleton to not leak while doing a domain reload.
-            // However this is doing a call to DestroyImmediate(). 
+            // However this is doing a call to DestroyImmediate().
             // To workaround this, and was we only leak with Singleton while doing domain reload (and not in OnValidate)
             // we are detecting if we are in an OnValidate call and releasing the Singleton only if it is not the case.
             if (!m_Asset.isInOnValidateCall)
@@ -1802,7 +1802,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
                             // The HDProbe store only one RenderData per probe, however RenderData can be view dependent (e.g. planar probes).
                             // To avoid that the render data for the wrong view is used, we previously store a copy of the render data
-                            // for each viewer and we are going to set it on the probe right before said viewer is rendered. 
+                            // for each viewer and we are going to set it on the probe right before said viewer is rendered.
                             foreach (var probeDataPair in renderRequest.viewDependentProbesData)
                             {
                                 var probe = probeDataPair.Item2;
@@ -2021,11 +2021,11 @@ namespace UnityEngine.Rendering.HighDefinition
                 return;
             }
 
-            if (m_RenderGraph.enabled)
-            {
-                ExecuteWithRenderGraph(renderRequest, aovRequest, aovBuffers, renderContext, cmd);
-                return;
-            }
+            //if (m_RenderGraph.enabled)
+            //{
+            //    ExecuteWithRenderGraph(renderRequest, aovRequest, aovBuffers, renderContext, cmd);
+            //    return;
+            //}
 
             hdCamera.xr.StartSinglePass(cmd, camera, renderContext);
 
@@ -2083,7 +2083,7 @@ namespace UnityEngine.Rendering.HighDefinition
             // After Depth and Normals/roughness including decals
             bool depthBufferModified = RenderCustomPass(renderContext, cmd, hdCamera, customPassCullingResults, CustomPassInjectionPoint.AfterOpaqueDepthAndNormal);
 
-            // If the depth was already copied in RenderDBuffer, we force the copy again because the custom pass modified the depth. 
+            // If the depth was already copied in RenderDBuffer, we force the copy again because the custom pass modified the depth.
             if (depthBufferModified)
                 m_IsDepthBufferCopyValid = false;
 
@@ -3149,7 +3149,7 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 // We still bind black textures to make sure that something is bound (can be a problem on some platforms)
                 m_DbufferManager.BindBlackTextures(cmd);
-                
+
                 // Bind buffer to make sure that something is bound .
                 cmd.SetGlobalBuffer(HDShaderIDs._DecalPropertyMaskBufferSRV, m_DbufferManager.propertyMaskBuffer);
 
@@ -3426,10 +3426,10 @@ namespace UnityEngine.Rendering.HighDefinition
         /// <summary>
         /// Request an update of the environment lighting.
         /// </summary>
-        public void RequestSkyEnvironmentUpdate()
-        {
-            m_SkyManager.RequestEnvironmentUpdate();
-        }
+        //public void RequestSkyEnvironmentUpdate(bool toto = false)
+        //{
+        //    m_SkyManager.RequestEnvironmentUpdate();
+        //}
 
         internal void RequestStaticSkyUpdate()
         {

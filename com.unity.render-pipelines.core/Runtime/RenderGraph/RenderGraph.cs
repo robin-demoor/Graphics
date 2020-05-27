@@ -194,7 +194,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         /// <summary>
         /// Returns true if rendering with Render Graph is enabled.
         /// </summary>
-        public bool enabled { get { return m_DebugParameters.enableRenderGraph; } }
+        //public bool enabled { get { return m_DebugParameters.enableRenderGraph; } }
 
         // TODO: Currently only needed by SSAO to sample correctly depth texture mips. Need to figure out a way to hide this behind a proper formalization.
         /// <summary>
@@ -207,7 +207,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         /// </summary>
         /// <param name="supportMSAA">Specify if this Render Graph should support MSAA.</param>
         /// <param name="initialSampleCount">Specify the initial sample count of MSAA render textures.</param>
-        public RenderGraph(bool supportMSAA, MSAASamples initialSampleCount)
+        public RenderGraph(bool supportMSAA, MSAASamples initialSampleCount, bool test = false)
         {
             m_Resources = new RenderGraphResourceRegistry(supportMSAA, initialSampleCount, m_DebugParameters, m_Logger);
         }
