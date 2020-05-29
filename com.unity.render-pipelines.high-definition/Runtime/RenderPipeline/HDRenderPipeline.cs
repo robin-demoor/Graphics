@@ -3133,7 +3133,7 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 renderContext.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
-                renderContext.DrawWireOverlay(camera);
+                //renderContext.DrawWireOverlay(camera);
             }
         }
 #endif
