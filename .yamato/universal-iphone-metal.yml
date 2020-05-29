@@ -138,16 +138,17 @@ Build_Universal_iPhone_Metal_Player_CUSTOM-REVISION:
         players:
             paths:
               -  "players/**"
-Build_Universal_iPhone_Metal_Player_fast-trunk-with-xcode-proj:
-    name: Build Universal on iPhone_Metal_Player on version fast-trunk (include xcode project)
+Build_Universal_iPhone_Metal_Player_CUSTOM-REVISION-with-xcode-proj:
+    name: Build Universal on iPhone_Metal_Player on version CUSTOM-REVISION (include xcode project)
     agent:
         type: Unity::VM::osx
         image: mobile/macos-10.13-testing:stable
         flavor: b1.large
     variables:
         UPM_REGISTRY: https://artifactory-slo.bf.unity3d.com/artifactory/api/npm/upm-candidates
+        CUSTOM_REVISION: custom_revision_not_set
     dependencies:
-      -  path: .yamato/_editor.yml#editor:priming:fast-trunk:ios
+      -  path: .yamato/_editor.yml#editor:priming:CUSTOM-REVISION:ios
          rerun: always
     commands:
       -  pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple --upgrade
