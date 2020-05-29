@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.ShaderGraph;
 using UnityEngine;
+using UnityEditor.Rendering.HighDefinition.ShaderGraph;
 
 namespace UnityEditor.Rendering.HighDefinition
 {
@@ -46,18 +47,6 @@ namespace UnityEditor.Rendering.HighDefinition
             "HDRP/Decal",
             "HDRP/TerrainLit",
             "HDRP/AxF",
-        };
-
-        // exposed shadergraph, for reference while searching the ShaderID
-        static readonly Type[] s_MasterNodes =
-        {
-            typeof(HDUnlitMasterNode),
-            typeof(HDLitMasterNode),
-            typeof(HairMasterNode),
-            typeof(FabricMasterNode),
-            typeof(StackLitMasterNode),
-            typeof(DecalMasterNode),
-            typeof(EyeMasterNode),
         };
 
         // list of methods for resetting keywords
@@ -133,8 +122,8 @@ namespace UnityEditor.Rendering.HighDefinition
 
             if (shader.IsShaderGraph())
             {
-                var outputNodeType = GraphUtil.GetOutputNodeType(AssetDatabase.GetAssetPath(shader));
-                return s_MasterNodes.Contains(outputNodeType);
+                // All HDRP shader graphs should have HD metadata
+                return shader.TryGetMetadataOfType<HDMetadata>(out _);
             }
             else if (upgradable)
                 return s_ShaderPaths.Contains(shader.name);
@@ -149,15 +138,13 @@ namespace UnityEditor.Rendering.HighDefinition
 
             if (shader.IsShaderGraph())
             {
-                string shaderPath = AssetDatabase.GetAssetPath(shader);
-                switch (GraphUtil.GetOutputNodeType(shaderPath).Name)
-                {
-                    case nameof(HDUnlitMasterNode):
-                    case nameof(UnlitMasterNode):
-                        return true;
-                    default:
-                        return false;
-                }
+                // Throw exception if no metadata is found
+                // This case should be handled by the Target
+                HDMetadata obj;
+                if(!shader.TryGetMetadataOfType<HDMetadata>(out obj))
+                    throw new ArgumentException("Unknown shader");
+                
+                return obj.shaderID == ShaderID.SG_Unlit;
             }
             else
                 return shader.name == "HDRP/Unlit";
@@ -175,27 +162,17 @@ namespace UnityEditor.Rendering.HighDefinition
             return s_ShaderPaths[index];
         }
 
-        internal static Type GetShaderMasterNodeType(ShaderID id)
-        {
-            int index = (int)id - (int)ShaderID.Count_Standard;
-            if (index < 0 && index >= (int)ShaderID.Count_ShaderGraph)
-            {
-                Debug.LogError("Trying to access HDRP shader path out of bounds");
-                return null;
-            }
-
-            return s_MasterNodes[index];
-        }
-
         internal static ShaderID GetShaderEnumFromShader(Shader shader)
         {
             if (shader.IsShaderGraph())
             {
-                var type = GraphUtil.GetOutputNodeType(AssetDatabase.GetAssetPath(shader));
-                var index = Array.FindIndex(s_MasterNodes, m => m == type);
-                if (index == -1)
+                // Throw exception if no metadata is found
+                // This case should be handled by the Target
+                HDMetadata obj;
+                if(!shader.TryGetMetadataOfType<HDMetadata>(out obj))
                     throw new ArgumentException("Unknown shader");
-                return (ShaderID)(index + ShaderID.Count_Standard);
+                
+                return obj.shaderID;
             }
             else
             {

@@ -1,4 +1,4 @@
-PackedVaryings vert(Attributes input)
+﻿PackedVaryings vert(Attributes input)
 {
     Varyings output = (Varyings)0;
     output = BuildVaryings(input);
@@ -15,7 +15,17 @@ half4 frag(PackedVaryings packedInput) : SV_TARGET
     SurfaceDescriptionInputs surfaceDescriptionInputs = BuildSurfaceDescriptionInputs(unpacked);
     SurfaceDescription surfaceDescription = SurfaceDescriptionFunction(surfaceDescriptionInputs);
 
-    surfaceDescription.Color *= unpacked.color;
+#if ETC1_EXTERNAL_ALPHA
+    float4 alpha = SAMPLE_TEXTURE2D(_AlphaTex, sampler_AlphaTex, unpacked.texCoord0.xy);
+    surfaceDescription.Alpha = lerp (surfaceDescription.Alpha, alpha.r, _EnableAlphaTexture);
+#endif
 
-    return surfaceDescription.Color;
+#ifdef UNIVERSAL_USELEGACYSPRITEBLOCKS
+    half4 color = surfaceDescription.SpriteColor;
+#else
+    half4 color = half4(surfaceDescription.BaseColor, surfaceDescription.Alpha);
+#endif
+
+    color *= unpacked.color;
+    return color;
 }
