@@ -1,5 +1,6 @@
 using System;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 
 #if UNITY_EDITOR
     using UnityEditor;
@@ -261,7 +262,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 m_ShaderVariablesRayTracingCB._RaytracingMinRecursion = m_PathTracingSettings.minimumDepth.value;
                 m_ShaderVariablesRayTracingCB._RaytracingMaxRecursion = m_PathTracingSettings.maximumDepth.value;
                 m_ShaderVariablesRayTracingCB._RaytracingIntensityClamp = m_PathTracingSettings.maximumIntensity.value;
-                cmd.SetGlobalFloat(HDShaderIDs._RaytracingRayBias, rayTracingSettings.rayBias.value);
+                m_ShaderVariablesRayTracingCB._RaytracingSampleIndex = (int)camData.currentIteration;
                 ConstantBuffer.PushGlobal(cmd, m_ShaderVariablesRayTracingCB, HDShaderIDs._ShaderVariablesRaytracing);
 
                 // LightLoop data
