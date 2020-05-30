@@ -15,6 +15,7 @@ using UnityEditor.ShaderGraph.Internal;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using Node = UnityEditor.Experimental.GraphView.Node;
+using Drawing.Inspector.PropertyDrawers;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -358,8 +359,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             var nodeList = m_GraphView.Query<MaterialNodeView>().ToList();
             editorView.colorManager.UpdateNodeViews(nodeList);
         }
-
-        public string inspectorTitle => $"{node.name} (Node)";
 
         public object GetObjectToInspect()
         {
