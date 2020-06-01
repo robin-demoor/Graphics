@@ -139,7 +139,13 @@ float3 SampleBakedGI(PositionInputs posInputs, float3 normalWS, uint renderingLa
     posInputs.tileCoord = tileCoord;
     #endif
 
-    combinedGI += EvaluateProbeVolumes(posInputs, normalWS, renderingLayers, probeVolumeHierarchyWeight);
+    // TODO: SampleBakedGI() will be called twice, once for the front facing direction, and once for the back facing direction (for transmission).
+    // For Probe Volumes specifically, this is not necessary - it would be better to return the coefficients, and just evaluate those coefficients twice (once for for each normal).
+    // We already do this in LightLoop evaluation mode.
+    // This would require the caller to track whether or not it needs to be called a second time.
+    ProbeVolumeCoefficients coefficients;
+    EvaluateProbeVolumes(posInputs, normalWS, renderingLayers, coefficients, probeVolumeHierarchyWeight);
+    combinedGI += EvaluateProbeVolumeCoefficients(normalWS, coefficients);
     combinedGI += EvaluateProbeVolumeAmbientProbeFallback(normalWS, probeVolumeHierarchyWeight);
 #endif
 
