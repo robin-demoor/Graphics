@@ -139,7 +139,7 @@ Build_Universal_iPhone_Metal_Player_CUSTOM-REVISION:
             paths:
               -  "players/**"
 Build_Universal_iPhone_Metal_Player_fast-trunk-with-xcode-proj:
-    ame: Build Universal on iPhone_Metal_Player on version fast-trunk with xcode project artifacts
+    name: Build Universal on iPhone_Metal_Player on version fast-trunk with xcode-project artifacts
     agent:
         type: Unity::VM::osx
         image: mobile/macos-10.13-testing:stable
