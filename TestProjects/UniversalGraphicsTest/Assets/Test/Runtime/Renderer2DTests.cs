@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.Universal;
+using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 [TestFixture]
@@ -50,10 +51,10 @@ class Renderer2DTests
         Renderer2D baseRenderer = m_BaseCameraData.scriptableRenderer as Renderer2D;
 
         Assert.IsFalse(baseRenderer.createColorTexture);
-        Assert.AreEqual(RenderTargetHandle.CameraTarget.Identifier(), baseRenderer.cameraColorTarget);
+        Assert.AreEqual(BuiltinRenderTextureType.CameraTarget, baseRenderer.cameraColorTarget);
 
         Assert.IsFalse(baseRenderer.createDepthTexture);
-        Assert.AreEqual(RenderTargetHandle.CameraTarget.Identifier(), baseRenderer.cameraDepthTarget);
+        Assert.AreEqual(BuiltinRenderTextureType.CameraTarget, baseRenderer.cameraDepthTarget);
     }
 
     [Test]
@@ -66,10 +67,10 @@ class Renderer2DTests
         Renderer2D baseRenderer = m_BaseCameraData.scriptableRenderer as Renderer2D;
 
         Assert.IsTrue(baseRenderer.createColorTexture);
-        Assert.AreNotEqual(RenderTargetHandle.CameraTarget.Identifier(), baseRenderer.cameraColorTarget);
+        Assert.AreNotEqual(BuiltinRenderTextureType.CameraTarget, baseRenderer.cameraColorTarget);
 
         Assert.IsTrue(baseRenderer.createDepthTexture);
-        Assert.AreNotEqual(RenderTargetHandle.CameraTarget.Identifier(), baseRenderer.cameraDepthTarget);
+        Assert.AreNotEqual(BuiltinRenderTextureType.CameraTarget, baseRenderer.cameraDepthTarget);
     }
 
     [Test]
@@ -82,7 +83,7 @@ class Renderer2DTests
         Renderer2D baseRenderer = m_BaseCameraData.scriptableRenderer as Renderer2D;
 
         Assert.IsTrue(baseRenderer.createColorTexture);
-        Assert.AreNotEqual(RenderTargetHandle.CameraTarget.Identifier(), baseRenderer.cameraColorTarget);
+        Assert.AreNotEqual(BuiltinRenderTextureType.CameraTarget, baseRenderer.cameraColorTarget);
 
         Assert.IsFalse(baseRenderer.createDepthTexture);
         Assert.AreEqual(baseRenderer.cameraColorTarget, baseRenderer.cameraDepthTarget);
