@@ -1,3 +1,4 @@
+using System;
 using System.Reflection;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering.Universal.Internal;
@@ -66,6 +67,10 @@ namespace UnityEngine.Rendering.Universal
         CameraAttachments m_ActiveCameraAttachments;
         CameraAttachments m_CameraAttachments;
 
+        //Color buffers for post-processing
+        BufferedRTHandleSystem m_ColorRTBufferSystem;
+        int m_CurrentColorBuffer = 0;
+
         RTHandle m_DepthTexture;
         RTHandle m_NormalsTexture;
         RTHandle[] m_GBufferHandles;
@@ -91,7 +96,6 @@ namespace UnityEngine.Rendering.Universal
         internal ColorGradingLutPass colorGradingLutPass { get => m_PostProcessPasses.colorGradingLutPass; }
         internal PostProcessPass postProcessPass { get => m_PostProcessPasses.postProcessPass; }
         internal PostProcessPass finalPostProcessPass { get => m_PostProcessPasses.finalPostProcessPass; }
-        internal RTHandle afterPostProcessColor { get => m_PostProcessPasses.afterPostProcessColor; }
         internal RTHandle colorGradingLut { get => m_PostProcessPasses.colorGradingLut; }
 
         public ForwardRenderer(ForwardRendererData data) : base(data)
@@ -187,17 +191,9 @@ namespace UnityEngine.Rendering.Universal
 #endif
 
             // RenderTexture format depends on camera and pipeline (HDR, non HDR, etc)
-            // Samples (MSAA) depend on camera and pipeline
-            m_CameraAttachments.color = RTHandles.Alloc(
-                Vector2.one,
-                depthBufferBits: DepthBits.None,
-                colorFormat: GraphicsFormat.B10G11R11_UFloatPack32, // TODO there's a determine format we can use here
-                filterMode: FilterMode.Bilinear,
-                dimension: TextureDimension.Tex2D,
-                useMipMap: false,
-                autoGenerateMips: false,
-                enableMSAA: false,
-                name: "_CameraColorTexture");
+            // Samples (MSAA) depend on camera and pipelin
+            AllocColorRT(0, BufferedRTAllocator, 2, GraphicsFormat.B10G11R11_UFloatPack32, false);
+            m_CameraAttachments.color = GetCurrenColorBuffer();
 
             bool bindMS = false;
 #if ENABLE_VR && ENABLE_XR_MODULE
@@ -300,7 +296,9 @@ namespace UnityEngine.Rendering.Universal
 
             m_CameraAttachments.color.Release();
             m_CameraAttachments.depth.Release();
+            m_ColorRTBufferSystem.ReleaseAll();
             m_OpaqueColor.Release();
+
             if (m_GBufferHandles != null)
             {
                 m_GBufferHandles[(int) DeferredLights.GBufferHandles.DepthAsColor]?.Release();
@@ -321,6 +319,7 @@ namespace UnityEngine.Rendering.Universal
             ref CameraData cameraData = ref renderingData.cameraData;
             RenderTextureDescriptor cameraTargetDescriptor = renderingData.cameraData.cameraTargetDescriptor;
 
+            m_ColorRTBufferSystem.SwapAndSetReferenceSize(cameraData.cameraTargetDescriptor.width, cameraData.cameraTargetDescriptor.height, (MSAASamples)cameraData.cameraTargetDescriptor.msaaSamples);
             UpdateCameraAttachments(ref cameraTargetDescriptor);
 
             // Special path for depth only offscreen cameras. Only write opaques + transparents.
@@ -601,29 +600,28 @@ namespace UnityEngine.Rendering.Universal
                 // Post-processing will resolve to final target. No need for final blit pass.
                 if (applyPostProcessing)
                 {
-                    var destination = resolvePostProcessingToCameraTarget ? k_CameraTarget : afterPostProcessColor;
+                    var destination = resolvePostProcessingToCameraTarget ? k_CameraTarget : GetNextColorBuffer();
 
                     // if resolving to screen we need to be able to perform sRGBConvertion in post-processing if necessary
                     bool doSRGBConvertion = resolvePostProcessingToCameraTarget;
                     postProcessPass.Setup(cameraTargetDescriptor, m_ActiveCameraAttachments.color, destination, m_ActiveCameraAttachments.depth, colorGradingLut, applyFinalPostProcessing, doSRGBConvertion);
                     EnqueuePass(postProcessPass);
+                    SwapColorBuffer();
                 }
-
-
-                // if we applied post-processing for this camera it means current active texture is m_AfterPostProcessColor
-                var sourceForFinalPass = applyPostProcessing ? afterPostProcessColor : m_ActiveCameraAttachments.color;
 
                 // Do FXAA or any other final post-processing effect that might need to run after AA.
                 if (applyFinalPostProcessing)
                 {
-                    finalPostProcessPass.SetupFinalPass(sourceForFinalPass);
+                    finalPostProcessPass.SetupFinalPass(GetCurrenColorBuffer());
                     EnqueuePass(finalPostProcessPass);
+                    SwapColorBuffer();
                 }
 
                 if (renderingData.cameraData.captureActions != null)
                 {
-                    m_CapturePass.Setup(sourceForFinalPass);
+                    m_CapturePass.Setup(GetCurrenColorBuffer());
                     EnqueuePass(m_CapturePass);
+                    SwapColorBuffer();
                 }
 
                 // if post-processing then we already resolved to camera target while doing post.
@@ -639,8 +637,9 @@ namespace UnityEngine.Rendering.Universal
                 // We need final blit to resolve to screen
                 if (!cameraTargetResolved)
                 {
-                    m_FinalBlitPass.Setup(cameraTargetDescriptor, sourceForFinalPass);
+                    m_FinalBlitPass.Setup(cameraTargetDescriptor, GetCurrenColorBuffer());
                     EnqueuePass(m_FinalBlitPass);
+                    SwapColorBuffer();
                 }
 
 #if ENABLE_VR && ENABLE_XR_MODULE
@@ -658,7 +657,7 @@ namespace UnityEngine.Rendering.Universal
             // stay in RT so we resume rendering on stack after post-processing
             else if (applyPostProcessing)
             {
-                postProcessPass.Setup(cameraTargetDescriptor, m_ActiveCameraAttachments.color, afterPostProcessColor, m_ActiveCameraAttachments.depth, colorGradingLut, false, false);
+                postProcessPass.Setup(cameraTargetDescriptor, m_ActiveCameraAttachments.color, GetNextColorBuffer(), m_ActiveCameraAttachments.depth, colorGradingLut, false, false);
                 EnqueuePass(postProcessPass);
             }
 
@@ -801,21 +800,39 @@ namespace UnityEngine.Rendering.Universal
             return inputSummary;
         }
 
+        public RTHandle AllocColorRT(int id, Func<int, RTHandleSystem, GraphicsFormat, bool, RTHandle> allocator, int bufferCount, GraphicsFormat format, bool enableMSAA)
+        {
+            if (m_ColorRTBufferSystem == null)
+            {
+                m_ColorRTBufferSystem = new BufferedRTHandleSystem();
+                m_ColorRTBufferSystem.SetReferenceSize(RTHandles.maxWidth, RTHandles.maxHeight, MSAASamples.None);
+            }
+
+            m_ColorRTBufferSystem.AllocBuffer(id, (rts, i) => allocator(id, rts, format, enableMSAA), bufferCount);
+            return m_ColorRTBufferSystem.GetFrameRT(id, 0);
+        }
+
+        // BufferedRTHandleSystem API expects an allocator function. We define it here.
+        static RTHandle BufferedRTAllocator(int frameIndex, RTHandleSystem RTsystem, GraphicsFormat format, bool enablemsaa)
+        {
+            return RTsystem.Alloc(
+                    Vector2.one,
+                    depthBufferBits: DepthBits.None,
+                    colorFormat: format,
+                    filterMode: FilterMode.Bilinear,
+                    dimension: TextureDimension.Tex2D,
+                    useMipMap: false,
+                    autoGenerateMips: false,
+                    enableMSAA: enablemsaa,
+                    name: "_CameraColorTexture");
+        }
+
         void UpdateCameraAttachments(ref RenderTextureDescriptor descriptor)
         {
             if (m_CameraAttachments.color.rt.graphicsFormat != descriptor.graphicsFormat)
             {
-                m_CameraAttachments.color.Release();
-                m_CameraAttachments.color = RTHandles.Alloc(Vector2.one,
-                    depthBufferBits: DepthBits.None,
-                    colorFormat: descriptor.graphicsFormat,
-                    filterMode: FilterMode.Bilinear,
-                    dimension: TextureDimension.Tex2D,
-                    enableRandomWrite: false,
-                    useMipMap: false,
-                    autoGenerateMips: false,
-                    enableMSAA: true,
-                    name: "_CameraColorTexture");
+                m_ColorRTBufferSystem.ReleaseAll();
+                m_CameraAttachments.color = AllocColorRT(0, BufferedRTAllocator, 2, descriptor.graphicsFormat, true);
             }
 
             bool bindMS = false;
@@ -909,6 +926,22 @@ namespace UnityEngine.Rendering.Universal
             //bool msaaDepthResolve = msaaEnabledForCamera && SystemInfo.supportsMultisampledTextures != 0;
             bool msaaDepthResolve = false;
             return supportsDepthCopy || msaaDepthResolve;
+        }
+
+        RTHandle GetNextColorBuffer()
+        {
+            int nextBuffer = (m_CurrentColorBuffer + 1) % 2;
+            return m_ColorRTBufferSystem.GetFrameRT(0, nextBuffer);
+        }
+
+        void SwapColorBuffer()
+        {
+            m_CurrentColorBuffer = (m_CurrentColorBuffer + 1) % 2;
+        }
+
+        RTHandle GetCurrenColorBuffer()
+        {
+            return m_ColorRTBufferSystem.GetFrameRT(0, m_CurrentColorBuffer);
         }
     }
 }
